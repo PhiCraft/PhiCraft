@@ -483,7 +483,64 @@
   }
   .dock .app:hover::after { opacity: 1; }
 
-  footer { text-align: center; padding: 40px 0 140px; color: var(--text-dim); font-size: 13px; position: relative; z-index: 1; }
+  /* ============ QQ群 & 页脚 ============ */
+  .qq-group {
+    text-align: center;
+    padding: 20px 10px 10px;
+    color: var(--text-dim);
+    font-size: 15px;
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(2px);
+    border-radius: 16px;
+    max-width: 500px;
+    margin: 0 auto 20px;
+    transition: background .5s;
+  }
+  [data-theme="dark"] .qq-group {
+    background: rgba(0,0,0,0.2);
+  }
+  .qq-group strong {
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    padding: 0 4px;
+  }
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--edge-lo);
+    border-radius: 8px;
+    padding: 4px 14px;
+    margin-left: 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .copy-btn:hover {
+    background: rgba(0,0,0,0.05);
+    border-color: var(--edge-hi);
+  }
+  [data-theme="dark"] .copy-btn:hover {
+    background: rgba(255,255,255,0.08);
+  }
+  .copy-btn.copied {
+    background: var(--accent2, #7c5cfc);
+    color: #fff;
+    border-color: var(--accent2, #7c5cfc);
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px 0 60px;
+    color: var(--text-dim);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+  }
 
   /* 特性展示区域 */
   .feature-demo {
@@ -525,12 +582,13 @@
     background: var(--card-bg, #fff);
     border-radius: 24px;
     padding: 20px;
+    width: auto;
     max-width: 90vw;
     max-height: 90vh;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     overflow: hidden;
   }
   [data-theme="dark"] #modal-content {
@@ -541,6 +599,7 @@
     max-height: 80vh;
     border-radius: 12px;
     display: block;
+    object-fit: contain;
   }
   #modal-content .loading-spinner {
     position: absolute;
@@ -619,7 +678,7 @@
     <h1><small>Phira 谱面编辑 · 重制 · 融合</small>PhiCraft</h1>
     <p>轻量、高效的谱面工具，支持音符批量转换、流速调节、长条切割、铺面融合、镜像偏移，内置 C++ 加速引擎。</p>
     <div class="glass hero-card" data-glass data-bezel="0.5" data-strength="0.5">
-      <!-- 点击弹出图片的“获取程序”按钮 -->
+      <!-- 获取程序按钮 -->
       <div class="button-wrap" id="get-program-wrap">
         <div class="button-shadow"></div>
         <button id="get-program-btn"><span>获取程序</span></button>
@@ -702,7 +761,7 @@
     <h2>获取 PhiCraft</h2>
     <p class="sub">兼容 Windows，绿色免安装</p>
     <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
-      <!-- 点击弹出图片的“获取程序”按钮 -->
+      <!-- 获取程序按钮 -->
       <div class="button-wrap" id="get-program-wrap-2">
         <div class="button-shadow"></div>
         <button id="get-program-btn-2"><span>获取程序</span></button>
@@ -727,19 +786,16 @@
   </section>
 </main>
 
-<!-- Dock -->
-<div class="dock glass" data-glass data-bezel="0.6" data-strength="0.6" id="dock">
-  <div class="app" data-name="谱面" style="background:linear-gradient(135deg,#4facfe,#1e6cff)">📄</div>
-  <div class="app" data-name="音符" style="background:linear-gradient(135deg,#ff5e8a,#ff2d55)">🎵</div>
-  <div class="app" data-name="速度" style="background:linear-gradient(135deg,#38d9c0,#2bb673)">⚡</div>
-  <div class="app" data-name="融合" style="background:linear-gradient(135deg,#a17bff,#6a5bff)">🧩</div>
-  <div class="app" data-name="偏移" style="background:linear-gradient(135deg,#ffd35e,#ff9500)">↔️</div>
-  <div class="app" data-name="引擎" style="background:linear-gradient(135deg,#9aa0ae,#5b616e)">⚙️</div>
+<!-- QQ群区域 -->
+<div class="qq-group" id="qq-group">
+  获取程序          QQ交流群：<strong id="qq-num">1102327584</strong>
+  <button class="copy-btn" id="copy-qq-btn">复制群号</button>
 </div>
 
+<!-- 页脚 -->
 <footer>PhiCraft © 2026 · 专为 Phira 社区打造 · 使用过程中遇到任何问题，欢迎反馈</footer>
 
-<!-- ========== 图片弹出模态框 ========== -->
+<!-- 图片弹出模态框 -->
 <div id="modal-overlay">
   <div id="modal-content">
     <div class="loading-spinner" id="modal-spinner">
@@ -884,63 +940,145 @@ dock.addEventListener('pointermove', e => {
 dock.addEventListener('pointerleave', () => apps.forEach(a => a.style.transform = ''));
 
 /* ================================================================
-   点击“获取程序”弹出图片（预加载优化 + 修复加载中问题）
+   点击“获取程序”弹出 QQ 群号并跳转到底部
    ================================================================ */
-const imgSrc = 'PhiCraft.jpg'; // 图片路径
+const qqNum = '1102327584';
 
-// 1. 页面加载时预加载图片（使用同一个 Image 对象）
-const preloadedImg = new Image();
-preloadedImg.src = imgSrc;
-
-// 2. 获取 DOM 元素
+// 1. 获取 DOM 元素
 const modalOverlay = document.getElementById('modal-overlay');
 const modalImg = document.getElementById('modal-img');
 const modalSpinner = document.getElementById('modal-spinner');
 const modalClose = document.getElementById('modal-close');
 
-// 3. 打开模态框的函数
-function openModal() {
+// 2. 弹出 QQ 群号并滚动到底部
+function showQQPopup() {
+  // 弹出模态框
   modalOverlay.classList.add('active');
-  modalSpinner.style.display = 'flex';
+  modalSpinner.style.display = 'none';
   modalImg.style.display = 'none';
+  
+  // 移除旧的群号内容（如果有）
+  const oldQQ = document.querySelector('#modal-content .qq-popup-content');
+  if (oldQQ) oldQQ.remove();
 
-  // 移除旧的事件监听（避免重复绑定）
-  modalImg.onload = null;
-  modalImg.onerror = null;
+  // 插入新的群号内容
+  const qqPopup = document.createElement('div');
+  qqPopup.className = 'qq-popup-content';
+  qqPopup.style.cssText = 'text-align: center; padding: 20px 10px; z-index: 5; width: 100%;';
+  qqPopup.innerHTML = `
+    <div style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--text);">QQ 交流群</div>
+    <div style="font-size: 42px; font-weight: 800; color: var(--accent2, #7c5cfc); margin: 10px 0; letter-spacing: 3px;">${qqNum}</div>
+    <button class="copy-btn" id="popup-copy-btn" style="margin-top: 12px; padding: 8px 28px; border: none; border-radius: 8px; background: var(--accent2, #7c5cfc); color: #fff; cursor: pointer; font-size: 15px;">一键复制群号</button>
+  `;
+  document.getElementById('modal-content').appendChild(qqPopup);
 
-  // 设置图片源
-  modalImg.src = imgSrc;
+  // 绑定弹出框内的复制按钮
+  document.getElementById('popup-copy-btn').addEventListener('click', function() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(qqNum).then(() => {
+        this.textContent = '已复制！';
+        setTimeout(() => this.textContent = '一键复制群号', 1500);
+      }).catch(() => fallbackCopyPopup(this));
+    } else {
+      fallbackCopyPopup(this);
+    }
+  });
 
-  // 监听加载完成
-  modalImg.onload = function() {
-    modalSpinner.style.display = 'none';
-    modalImg.style.display = 'block';
-  };
-
-  // 监听加载失败
-  modalImg.onerror = function() {
-    modalSpinner.innerHTML = '<span style="color:#ff5252;">图片加载失败，请检查路径</span>';
-    // 也可以选择隐藏 spinner 并显示错误信息，或保留加载状态但提示错误
-  };
+  // 滚动到 QQ 群区域并高亮
+  const target = document.getElementById('qq-group');
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.style.transition = 'box-shadow 0.3s ease, background 0.3s ease';
+    target.style.boxShadow = '0 0 30px rgba(124, 92, 252, 0.4)';
+    target.style.background = 'rgba(124, 92, 252, 0.1)';
+    setTimeout(() => {
+      target.style.boxShadow = '';
+      target.style.background = '';
+    }, 3000);
+  }
 }
 
-// 4. 关闭模态框
+// 弹出框内复制降级方案
+function fallbackCopyPopup(btn) {
+  const textArea = document.createElement('textarea');
+  textArea.value = qqNum;
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      btn.textContent = '已复制！';
+      setTimeout(() => btn.textContent = '一键复制群号', 1500);
+    } else {
+      alert('复制失败，请手动复制：' + qqNum);
+    }
+  } catch (err) {
+    alert('复制失败，请手动复制：' + qqNum);
+  }
+  document.body.removeChild(textArea);
+}
+
+// 3. 关闭模态框清理
 function closeModal() {
   modalOverlay.classList.remove('active');
-  // 可选：重置图片源，释放内存，但不需要
+  const oldQQ = document.querySelector('#modal-content .qq-popup-content');
+  if (oldQQ) oldQQ.remove();
 }
 
-// 5. 绑定点击事件
-document.getElementById('get-program-btn').addEventListener('click', openModal);
-document.getElementById('get-program-btn-2').addEventListener('click', openModal);
+// 4. 绑定点击事件（将获取程序按钮与显示QQ群关联）
+document.getElementById('get-program-btn').addEventListener('click', showQQPopup);
+document.getElementById('get-program-btn-2').addEventListener('click', showQQPopup);
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
-// 按 ESC 键关闭
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
+
+/* ================================================================
+   底部 QQ 群号复制按钮
+   ================================================================ */
+const copyBtn = document.getElementById('copy-qq-btn');
+copyBtn.addEventListener('click', function() {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(qqNum).then(() => {
+      this.textContent = '已复制！';
+      this.classList.add('copied');
+      setTimeout(() => {
+        this.textContent = '复制群号';
+        this.classList.remove('copied');
+      }, 2000);
+    }).catch(() => fallbackCopyBottom(this));
+  } else {
+    fallbackCopyBottom(this);
+  }
+});
+
+function fallbackCopyBottom(btn) {
+  const textArea = document.createElement('textarea');
+  textArea.value = qqNum;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      btn.textContent = '已复制！';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '复制群号';
+        btn.classList.remove('copied');
+      }, 2000);
+    } else {
+      alert('复制失败，请手动复制：' + qqNum);
+    }
+  } catch (err) {
+    alert('复制失败，请手动复制：' + qqNum);
+  }
+  document.body.removeChild(textArea);
+}
 </script>
 </body>
 </html>
