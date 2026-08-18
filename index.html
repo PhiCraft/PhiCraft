@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhiCraft — 谱面编辑与重制工具</title>
+<style>
+  /* ========== Defs.txt 按钮样式（完全复刻） ========== */
+  @property --angle-1 {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: -75deg;
+  }
+  @property --angle-2 {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: -45deg;
+  }
+  :root {
+    --global--size: clamp(2rem, 4vw, 5rem);
+    --anim--hover-time: 400ms;
+    --anim--hover-ease: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .button-wrap {
+    position: relative;
+    z-index: 2;
+    border-radius: 999vw;
+    background: transparent;
+    pointer-events: none;
+    transition: all var(--anim--hover-time) var(--anim--hover-ease);
+  }
+  .button-shadow {
+    --shadow-cuttoff-fix: 2em;
+    position: absolute;
+    width: calc(100% + var(--shadow-cuttoff-fix));
+    height: calc(100% + var(--shadow-cuttoff-fix));
+    top: calc(0% - var(--shadow-cuttoff-fix) / 2);
+    left: calc(0% - var(--shadow-cuttoff-fix) / 2);
+    filter: blur(clamp(2px, 0.125em, 12px));
+    -webkit-filter: blur(clamp(2px, 0.125em, 12px));
+    -moz-filter: blur(clamp(2px, 0.125em, 12px));
+    -ms-filter: blur(clamp(2px, 0.125em, 12px));
+    overflow: visible;
+    pointer-events: none;
+  }
+  .button-shadow::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border-radius: 999vw;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+    width: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+    height: calc(100% - var(--shadow-cuttoff-fix) - 0.25em);
+    top: calc(var(--shadow-cuttoff-fix) - 0.5em);
+    left: calc(var(--shadow-cuttoff-fix) - 0.875em);
+    padding: 0.125em;
+    box-sizing: border-box;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    transition: all var(--anim--hover-time) var(--anim--hover-ease);
+    overflow: visible;
+    opacity: 1;
+  }
+  button {
+    --border-width: clamp(1px, 0.0625em, 4px);
+    all: unset;
+    cursor: pointer;
+    position: relative;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    pointer-events: auto;
+    z-index: 3;
+    background: linear-gradient(
+      -75deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.05)
+    );
+    border-radius: 999vw;
+    box-shadow:
+      inset 0 0.125em 0.125em rgba(0, 0, 0, 0.05),
+      inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.5),
+      0 0.25em 0.125em -0.125em rgba(0, 0, 0, 0.2),
+      0 0 0.1em 0.25em inset rgba(255, 255, 255, 0.2),
+      0 0 0 0 rgba(255, 255, 255, 1);
+    backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+    -webkit-backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+    -moz-backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+    -ms-backdrop-filter: blur(clamp(1px, 0.125em, 4px));
+    transition: all var(--anim--hover-time) var(--anim--hover-ease);
+  }
+  button:hover {
+    transform: scale(0.975);
+    backdrop-filter: blur(0.01em);
+    -webkit-backdrop-filter: blur(0.01em);
+    -moz-backdrop-filter: blur(0.01em);
+    -ms-backdrop-filter: blur(0.01em);
+    box-shadow:
+      inset 0 0.125em 0.125em rgba(0, 0, 0, 0.05),
+      inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.5),
+      0 0.15em 0.05em -0.1em rgba(0, 0, 0, 0.25),
+      0 0 0.05em 0.1em inset rgba(255, 255, 255, 0.5),
+      0 0 0 0 rgba(255, 255, 255, 1);
+  }
+  button span {
+    position: relative;
+    display: block;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    font-family: "Inter", sans-serif;
+    letter-spacing: -0.05em;
+    font-weight: 500;
+    font-size: 1em;
+    color: rgba(50, 50, 50, 1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-shadow: 0em 0.25em 0.05em rgba(0, 0, 0, 0.1);
+    transition: all var(--anim--hover-time) var(--anim--hover-ease);
+    padding-inline: 1.5em;
+    padding-block: 0.875em;
+  }
+  button:hover span {
+    text-shadow: 0.025em 0.025em 0.025em rgba(0, 0, 0, 0.12);
+  }
+  button span::after {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: 1;
+    width: calc(100% - var(--border-width));
+    height: calc(100% - var(--border-width));
+    top: calc(0% + var(--border-width) / 2);
+    left: calc(0% + var(--border-width) / 2);
+    box-sizing: border-box;
+    border-radius: 999vw;
+    overflow: clip;
+    background: linear-gradient(
+      var(--angle-2),
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.5) 40% 50%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    z-index: 3;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    background-repeat: no-repeat;
+    transition:
+      background-position calc(var(--anim--hover-time) * 1.25) var(--anim--hover-ease),
+      --angle-2 calc(var(--anim--hover-time) * 1.25) var(--anim--hover-ease);
+  }
+  button:hover span::after {
+    background-position: 25% 50%;
+  }
+  button:active span::after {
+    background-position: 50% 15%;
+    --angle-2: -15deg;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    button span::after, button:active span::after { --angle-2: -45deg; }
+  }
+  button::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: 999vw;
+    width: calc(100% + var(--border-width));
+    height: calc(100% + var(--border-width));
+    top: calc(0% - var(--border-width) / 2);
+    left: calc(0% - var(--border-width) / 2);
+    padding: var(--border-width);
+    box-sizing: border-box;
+    background: conic-gradient(
+        from var(--angle-1) at 50% 50%,
+        rgba(0, 0, 0, 0.5),
+        rgba(0, 0, 0, 0) 5% 40%,
+        rgba(0, 0, 0, 0.5) 50%,
+        rgba(0, 0, 0, 0) 60% 95%,
+        rgba(0, 0, 0, 0.5)
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5));
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    transition:
+      all var(--anim--hover-time) var(--anim--hover-ease),
+      --angle-1 500ms ease;
+    box-shadow: inset 0 0 0 calc(var(--border-width) / 2) rgba(255, 255, 255, 0.5);
+  }
+  button:hover::after { --angle-1: -125deg; }
+  button:active::after { --angle-1: -75deg; }
+  @media (hover: none) and (pointer: coarse) {
+    button::after, button:hover::after, button:active::after { --angle-1: -75deg; }
+  }
+
+  .button-wrap:has(button:hover) .button-shadow {
+    filter: blur(clamp(2px, 0.0625em, 6px));
+    -webkit-filter: blur(clamp(2px, 0.0625em, 6px));
+    -moz-filter: blur(clamp(2px, 0.0625em, 6px));
+    -ms-filter: blur(clamp(2px, 0.0625em, 6px));
+    transition: filter var(--anim--hover-time) var(--anim--hover-ease);
+  }
+  .button-wrap:has(button:hover) .button-shadow::after {
+    top: calc(var(--shadow-cuttoff-fix) - 0.875em);
+    opacity: 1;
+  }
+  .button-wrap:has(button:active) {
+    transform: rotate3d(1, 0, 0, 25deg);
+  }
+  .button-wrap:has(button:active) button {
+    box-shadow:
+      inset 0 0.125em 0.125em rgba(0, 0, 0, 0.05),
+      inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.5),
+      0 0.125em 0.125em -0.125em rgba(0, 0, 0, 0.2),
+      0 0 0.1em 0.25em inset rgba(255, 255, 255, 0.2),
+      0 0.225em 0.05em 0 rgba(0, 0, 0, 0.05),
+      0 0.25em 0 0 rgba(255, 255, 255, 0.75),
+      inset 0 0.25em 0.05em 0 rgba(0, 0, 0, 0.15);
+  }
+  .button-wrap:has(button:active) .button-shadow {
+    filter: blur(clamp(2px, 0.125em, 12px));
+    -webkit-filter: blur(clamp(2px, 0.125em, 12px));
+    -moz-filter: blur(clamp(2px, 0.125em, 12px));
+    -ms-filter: blur(clamp(2px, 0.125em, 12px));
+  }
+  .button-wrap:has(button:active) .button-shadow::after {
+    top: calc(var(--shadow-cuttoff-fix) - 0.5em);
+    opacity: 0.75;
+  }
+  .button-wrap:has(button:active) span {
+    text-shadow: 0.025em 0.25em 0.05em rgba(0, 0, 0, 0.12);
+  }
+
+  /* 暗色模式按钮适配 */
+  [data-theme="dark"] button {
+    background: linear-gradient(
+      -75deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.25),
+      rgba(255, 255, 255, 0.08)
+    );
+    box-shadow:
+      inset 0 0.125em 0.125em rgba(0, 0, 0, 0.2),
+      inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.2),
+      0 0.25em 0.125em -0.125em rgba(0, 0, 0, 0.4),
+      0 0 0.1em 0.25em inset rgba(255, 255, 255, 0.15),
+      0 0 0 0 rgba(255, 255, 255, 0.5);
+  }
+  [data-theme="dark"] button span {
+    color: rgba(242, 243, 247, 1);
+    text-shadow: 0em 0.25em 0.05em rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] button:hover span {
+    text-shadow: 0.025em 0.025em 0.025em rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="dark"] button::after {
+    background: conic-gradient(
+        from var(--angle-1) at 50% 50%,
+        rgba(255, 255, 255, 0.4),
+        rgba(255, 255, 255, 0) 5% 40%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 60% 95%,
+        rgba(255, 255, 255, 0.4)
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3));
+  }
+  [data-theme="dark"] button span::after {
+    background: linear-gradient(
+      var(--angle-2),
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 40% 50%,
+      rgba(255, 255, 255, 0) 55%
+    );
+  }
+
+  /* ========== 页面其他样式 ========== */
+  :root {
+    --bg: #eef0f4;
+    --text: #1a1a1e;
+    --text-dim: rgba(26,26,30,.55);
+    --glass-tint: 255 255 255;
+    --tint-a: 0.12;
+    --edge-hi: rgba(255,255,255,.85);
+    --edge-lo: rgba(255,255,255,.35);
+    --shadow: 0 18px 50px rgba(0,10,40,.22);
+    --accent: #0a84ff;
+    --accent2: #7c5cfc;
+  }
+  [data-theme="dark"] {
+    --bg: #0b0c10;
+    --text: #f2f3f7;
+    --text-dim: rgba(242,243,247,.55);
+    --glass-tint: 22 24 32;
+    --tint-a: 0.28;
+    --edge-hi: rgba(255,255,255,.5);
+    --edge-lo: rgba(255,255,255,.14);
+    --shadow: 0 18px 50px rgba(0,0,0,.55);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family: -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    transition: background .5s, color .5s;
+  }
+
+  /* ============ 背景光斑 ============ */
+  .blobs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(90px); opacity: .75;
+    animation: float 22s ease-in-out infinite alternate;
+  }
+  [data-theme="dark"] .blob { opacity: .5; }
+  .b1 { width: 46vw; height: 46vw; left: -10vw; top: -12vw; background: #ff5e8a; }
+  .b2 { width: 40vw; height: 40vw; right: -8vw; top: 6vw; background: #4facfe; animation-delay: -6s; }
+  .b3 { width: 36vw; height: 36vw; left: 24vw; top: 44vh; background: #a17bff; animation-delay: -12s; }
+  .b4 { width: 34vw; height: 34vw; right: 4vw; bottom: -14vw; background: #ffc35e; animation-delay: -17s; }
+  @keyframes float {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(6vw,-4vh) scale(1.12); }
+    100% { transform: translate(-4vw,5vh) scale(.94); }
+  }
+
+  main { position: relative; z-index: 1; }
+
+  /* ============ 玻璃通用材质 ============ */
+  .glass {
+    position: relative;
+    border-radius: var(--r, 28px);
+    background: rgb(var(--glass-tint) / var(--tint-a));
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(4px) saturate(160%);
+    -webkit-backdrop-filter: blur(4px) saturate(160%);
+    transition: background .5s;
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    pointer-events: none; z-index: 2;
+    box-shadow:
+      inset 0 0 0 1px var(--edge-lo),
+      inset 1.8px 3px 0 -2px var(--edge-hi),
+      inset -2px -2px 0 -2px var(--edge-hi),
+      inset -3px -9px 1px -6px rgba(255,255,255,.55),
+      inset 3px 9px 1px -6px rgba(255,255,255,.35),
+      inset 0 -1px 5px 0 rgba(0,0,0,.12);
+  }
+  .glass::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    pointer-events: none; z-index: 2; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(220px circle at var(--mx,50%) var(--my,50%),
+                rgba(255,255,255,.28), transparent 65%);
+  }
+  .glass:hover::after { opacity: 1; }
+
+  /* ============ 顶部导航 ============ */
+  nav.glass {
+    position: fixed; top: 18px; left: 50%; translate: -50% 0;
+    z-index: 50; --r: 999px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px;
+  }
+  nav .logo { font-weight: 700; padding: 8px 16px; font-size: 15px; letter-spacing: .5px; color: var(--text); }
+  nav a {
+    color: var(--text); text-decoration: none; font-size: 14px;
+    padding: 8px 16px; border-radius: 999px; position: relative; z-index: 3;
+    transition: background .25s, transform .2s;
+  }
+  nav a:hover { background: rgb(var(--glass-tint) / .35); transform: scale(1.06); }
+
+  /* 导航中的主题切换按钮也使用 Defs 样式 */
+  nav .button-wrap {
+    display: inline-block;
+    margin: 0;
+    vertical-align: middle;
+  }
+  nav .button-wrap button {
+    font-size: 13px;
+  }
+  nav .button-wrap button span {
+    padding-inline: 1em;
+    padding-block: 0.6em;
+  }
+
+  /* ============ Hero ============ */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 120px 24px 80px; gap: 26px;
+  }
+  .hero h1 {
+    font-size: clamp(56px, 11vw, 150px); font-weight: 800; line-height: 1.02;
+    letter-spacing: -.03em;
+    background: linear-gradient(120deg, #ff5e8a, #a17bff 40%, #0a84ff 75%, #38d9c0);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero h1 small { display: block; font-size: .34em; letter-spacing: .35em; font-weight: 600; }
+  .hero p { max-width: 560px; font-size: 17px; color: var(--text-dim); line-height: 1.8; }
+
+  .hero-card {
+    --r: 32px; margin-top: 12px;
+    padding: 26px 30px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ============ 内容区块 ============ */
+  section { padding: 90px 8vw; position: relative; }
+  section h2 { font-size: clamp(30px, 4.4vw, 52px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 14px; }
+  section .sub { color: var(--text-dim); margin-bottom: 44px; font-size: 16px; }
+
+  /* 条纹区展示折射 */
+  .stripes-wrap { position: relative; border-radius: 40px; overflow: hidden; height: 380px; }
+  .stripes {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(115deg,
+      #0a84ff 0 34px, #fff 34px 68px, #ff5e8a 68px 102px, #1a1a1e 102px 136px);
+    animation: slide 9s linear infinite;
+  }
+  @keyframes slide { to { background-position: 587px 0; } }
+  .stripes-glass {
+    position: absolute; top: 50%; left: 50%; translate: -50% -50%;
+    --r: 36px; width: min(560px, 72%); height: 210px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .stripes-glass strong { font-size: 26px; position: relative; z-index: 3; }
+  .stripes-glass span { font-size: 14px; color: var(--text-dim); position: relative; z-index: 3; }
+
+  /* 卡片网格 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
+  .app-card {
+    --r: 26px; padding: 26px; display: flex; flex-direction: column; gap: 12px;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .app-card:hover { transform: translateY(-6px) scale(1.02); }
+  .app-card .icon {
+    width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center;
+    font-size: 24px; font-weight: 700; position: relative; z-index: 3;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 6px 16px rgba(0,0,0,.2);
+    color: #fff;
+  }
+  .app-card h3 { font-size: 17px; position: relative; z-index: 3; }
+  .app-card p { font-size: 13.5px; line-height: 1.7; color: var(--text-dim); position: relative; z-index: 3; }
+
+  /* 跑马灯大字 */
+  .marquee-zone { padding: 60px 0 160px; overflow: hidden; }
+  .marquee { display: flex; white-space: nowrap; animation: marq 20s linear infinite; }
+  .marquee span {
+    font-size: clamp(70px, 12vw, 160px); font-weight: 800; letter-spacing: -.02em;
+    padding-right: .6em;
+    color: transparent; -webkit-text-stroke: 2px var(--text);
+    opacity: .8;
+  }
+  @keyframes marq { to { transform: translateX(-50%); } }
+
+  /* ============ Dock ============ */
+  .dock {
+    position: fixed; bottom: 20px; left: 50%; translate: -50% 0; z-index: 50;
+    --r: 30px; display: flex; align-items: flex-end; gap: 12px;
+    padding: 10px 14px; height: 76px;
+  }
+  .dock .app {
+    position: relative; z-index: 3;
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 27px; cursor: pointer;
+    transform-origin: bottom center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 5px 14px rgba(0,0,0,.25);
+    transition: transform .09s ease-out;
+  }
+  .dock .app::after {
+    content: attr(data-name); position: absolute; top: -40px; left: 50%; translate: -50% 0;
+    background: rgb(var(--glass-tint) / .85); color: var(--text);
+    font-size: 12px; padding: 4px 10px; border-radius: 8px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    backdrop-filter: blur(10px);
+  }
+  .dock .app:hover::after { opacity: 1; }
+
+  footer { text-align: center; padding: 40px 0 140px; color: var(--text-dim); font-size: 13px; position: relative; z-index: 1; }
+
+  /* 特性展示区域 */
+  .feature-demo {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;
+  }
+  .demo-panel {
+    --r: 24px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .demo-panel h3 { font-size: 18px; }
+  .demo-panel p { color: var(--text-dim); font-size: 14px; line-height: 1.7; }
+  .demo-panel .mock {
+    background: rgb(var(--glass-tint) / .3); border-radius: 12px;
+    padding: 16px; font-size: 13px; border: 1px solid var(--edge-lo);
+  }
+
+  @media (max-width: 720px) {
+    .feature-demo { grid-template-columns: 1fr; }
+    nav a:not(.logo) { display: none; }
+  }
+
+  /* ========== 图片弹出模态框样式 ========== */
+  #modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #modal-overlay.active {
+    display: flex;
+  }
+  #modal-content {
+    position: relative;
+    background: var(--card-bg, #fff);
+    border-radius: 24px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  [data-theme="dark"] #modal-content {
+    background: #1a1c22;
+  }
+  #modal-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 12px;
+    display: block;
+  }
+  #modal-content .loading-spinner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-dim);
+    background: var(--card-bg, #fff);
+    border-radius: 24px;
+  }
+  [data-theme="dark"] #modal-content .loading-spinner {
+    background: #1a1c22;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--edge-lo);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 12px;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  #modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  #modal-close:hover {
+    background: rgba(0,0,0,0.6);
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景光斑 -->
+<div class="blobs">
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="blob b3"></div><div class="blob b4"></div>
+</div>
+
+<!-- SVG 滤镜容器 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="filter-defs"></defs></svg>
+
+<nav class="glass" data-glass data-bezel="0.6" data-strength="0.55">
+  <span class="logo">PhiCraft</span>
+  <a href="#features">功能</a>
+  <a href="#demo">演示</a>
+  <a href="#download">下载</a>
+  <!-- 主题切换按钮 -->
+  <div class="button-wrap">
+    <div class="button-shadow"></div>
+    <button id="theme-btn"><span>🌙</span></button>
+  </div>
+</nav>
+
+<main>
+  <div class="hero">
+    <h1><small>Phira 谱面编辑 · 重制 · 融合</small>PhiCraft</h1>
+    <p>轻量、高效的谱面工具，支持音符批量转换、流速调节、长条切割、铺面融合、镜像偏移，内置 C++ 加速引擎。</p>
+    <div class="glass hero-card" data-glass data-bezel="0.5" data-strength="0.5">
+      <!-- 点击弹出图片的“获取程序”按钮 -->
+      <div class="button-wrap" id="get-program-wrap">
+        <div class="button-shadow"></div>
+        <button id="get-program-btn"><span>获取程序</span></button>
+      </div>
+      <a href="#features" style="text-decoration:none; display:inline-block;">
+        <div class="button-wrap">
+          <div class="button-shadow"></div>
+          <button><span>了解功能</span></button>
+        </div>
+      </a>
+      <div class="button-wrap">
+        <div class="button-shadow"></div>
+        <button><span>问题反馈</span></button>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <h2>核心功能</h2>
+    <p class="sub">六大模块，覆盖谱面制作全流程</p>
+    <div class="grid">
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#4facfe,#1e6cff)">I</div>
+        <h3>谱面信息</h3>
+        <p>修改曲名、艺术家、谱师、BPM 及封面曲绘，一键保存生效。</p>
+      </div>
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#ff5e8a,#ff2d55)">N</div>
+        <h3>音符转换</h3>
+        <p>Tap、Drag、Flick 与长条之间的批量转换，支持多选文件同时处理。</p>
+      </div>
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#38d9c0,#2bb673)">S</div>
+        <h3>流速与切割</h3>
+        <p>整体倍率缩放或固定流速，并将长条拆分为密集短音符。</p>
+      </div>
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#a17bff,#6a5bff)">F</div>
+        <h3>铺面融合</h3>
+        <p>合并多个 .json 谱面，自动处理不同 BPM 并统一输出。</p>
+      </div>
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#ffd35e,#ff9500)">M</div>
+        <h3>偏移与镜像</h3>
+        <p>按拍数偏移复制所有判定线，或一键左右镜像翻转。</p>
+      </div>
+      <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
+        <div class="icon" style="background:linear-gradient(135deg,#9aa0ae,#5b616e)">C</div>
+        <h3>C++ 加速引擎</h3>
+        <p>内置 phi_plugin.dll，音符处理与偏移复制性能提升数倍。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo">
+    <h2>能力演示</h2>
+    <p class="sub">直观感受谱面编辑的流畅与精准</p>
+    <div class="feature-demo">
+      <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
+        <h3>批量音符转换</h3>
+        <p>选中多个谱面文件，一键将 Tap 转为 Drag，或将长条切割为 Tap。</p>
+        <div class="mock">→ 选中 3 个文件 · 转换类型：Tap → Drag<br>→ 共处理 1,247 个音符</div>
+      </div>
+      <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
+        <h3>铺面融合</h3>
+        <p>将多个不同 BPM 的谱面合并为一个，自动重采样，输出统一节奏。</p>
+        <div class="mock">→ 源文件：A.json (140BPM) + B.json (160BPM)<br>→ 合并后：190 条判定线，BPM 统一为 140</div>
+      </div>
+    </div>
+    <div style="margin-top:30px;">
+      <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
+        <h3>流速与切割</h3>
+        <p>整体流速倍率缩放，或固定为指定值。长条可自动切割为密集短音符。</p>
+        <div class="mock">→ 流速倍率 1.25× · 切割每拍 4 份 → 长条数减少 80%</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <h2>获取 PhiCraft</h2>
+    <p class="sub">兼容 Windows，绿色免安装</p>
+    <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+      <!-- 点击弹出图片的“获取程序”按钮 -->
+      <div class="button-wrap" id="get-program-wrap-2">
+        <div class="button-shadow"></div>
+        <button id="get-program-btn-2"><span>获取程序</span></button>
+      </div>
+      <a href="#how" style="text-decoration:none; display:inline-block;">
+        <div class="button-wrap">
+          <div class="button-shadow"></div>
+          <button><span>查看更新日志</span></button>
+        </div>
+      </a>
+    </div>
+    <div style="margin-top:30px; font-size:14px; color:var(--text-dim);">
+      版本 2.1.0 · 支持 Windows 10/11 · 无依赖运行
+    </div>
+  </section>
+
+  <section id="how" class="marquee-zone">
+    <div class="marquee">
+      <span>谱面编辑 · 音符转换 · 流速调节 · 铺面融合 · 镜像偏移 · 加速引擎 · </span>
+      <span>谱面编辑 · 音符转换 · 流速调节 · 铺面融合 · 镜像偏移 · 加速引擎 · </span>
+    </div>
+  </section>
+</main>
+
+<!-- Dock -->
+<div class="dock glass" data-glass data-bezel="0.6" data-strength="0.6" id="dock">
+  <div class="app" data-name="谱面" style="background:linear-gradient(135deg,#4facfe,#1e6cff)">📄</div>
+  <div class="app" data-name="音符" style="background:linear-gradient(135deg,#ff5e8a,#ff2d55)">🎵</div>
+  <div class="app" data-name="速度" style="background:linear-gradient(135deg,#38d9c0,#2bb673)">⚡</div>
+  <div class="app" data-name="融合" style="background:linear-gradient(135deg,#a17bff,#6a5bff)">🧩</div>
+  <div class="app" data-name="偏移" style="background:linear-gradient(135deg,#ffd35e,#ff9500)">↔️</div>
+  <div class="app" data-name="引擎" style="background:linear-gradient(135deg,#9aa0ae,#5b616e)">⚙️</div>
+</div>
+
+<footer>PhiCraft © 2026 · 专为 Phira 社区打造 · 使用过程中遇到任何问题，欢迎反馈</footer>
+
+<!-- ========== 图片弹出模态框 ========== -->
+<div id="modal-overlay">
+  <div id="modal-content">
+    <div class="loading-spinner" id="modal-spinner">
+      <div class="spinner"></div>
+      <span>加载中...</span>
+    </div>
+    <img id="modal-img" src="" alt="PhiCraft 软件截图" style="display:none;" />
+    <button id="modal-close">✕</button>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   Liquid Glass 核心：为每个 .glass 元素生成位移贴图
+   ================================================================ */
+const defs = document.getElementById('filter-defs');
+const glasses = [];
+const global = { strength: 1, blur: 4, sat: 160 };
+
+const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+const smoothStep = (a, b, t) => { t = clamp((t - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function roundedRectSDF(x, y, hw, hh, r) {
+  const qx = Math.abs(x) - hw + r, qy = Math.abs(y) - hh + r;
+  return Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - r;
+}
+
+function buildDisplacementMap(w, h, radius, bezel, strength, zoom) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(w, h);
+  const raw = new Float32Array(w * h * 2);
+  let maxD = 0.0001;
+  const hw = w / 2, hh = h / 2;
+  const k = strength * global.strength;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const cx = x + 0.5 - hw, cy = y + 0.5 - hh;
+      const d = roundedRectSDF(cx, cy, hw, hh, radius);
+      let m = smoothStep(-bezel, 0, d);
+      m = m * m;
+      const len = Math.hypot(cx, cy) || 1;
+      const dx = -(cx / len) * m * k * bezel - cx * zoom;
+      const dy = -(cy / len) * m * k * bezel - cy * zoom;
+      const i = (y * w + x) * 2;
+      raw[i] = dx; raw[i + 1] = dy;
+      maxD = Math.max(maxD, Math.abs(dx), Math.abs(dy));
+    }
+  }
+  const scale = maxD * 2;
+  const data = img.data;
+  for (let i = 0, p = 0; i < raw.length; i += 2, p += 4) {
+    data[p]     = clamp(raw[i]     / scale + 0.5, 0, 1) * 255;
+    data[p + 1] = clamp(raw[i + 1] / scale + 0.5, 0, 1) * 255;
+    data[p + 2] = 128;
+    data[p + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return { url: canvas.toDataURL(), scale };
+}
+
+let uid = 0;
+const SVGNS = 'http://www.w3.org/2000/svg';
+function makeGlass(el) {
+  const id = 'lg-' + (uid++);
+  const filter = document.createElementNS(SVGNS, 'filter');
+  filter.setAttribute('id', id);
+  filter.setAttribute('filterUnits', 'userSpaceOnUse');
+  filter.setAttribute('color-interpolation-filters', 'sRGB');
+  const feImage = document.createElementNS(SVGNS, 'feImage');
+  feImage.setAttribute('result', 'map');
+  feImage.setAttribute('preserveAspectRatio', 'none');
+  const feDisp = document.createElementNS(SVGNS, 'feDisplacementMap');
+  feDisp.setAttribute('in', 'SourceGraphic');
+  feDisp.setAttribute('in2', 'map');
+  feDisp.setAttribute('xChannelSelector', 'R');
+  feDisp.setAttribute('yChannelSelector', 'G');
+  filter.append(feImage, feDisp);
+  defs.appendChild(filter);
+
+  const g = {
+    el, filter, feImage, feDisp, id,
+    bezelFrac: parseFloat(el.dataset.bezel || 0.5),
+    strength: parseFloat(el.dataset.strength || 0.5),
+    zoom: parseFloat(el.dataset.zoom || 0),
+    update() {
+      const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+      if (!w || !h) return;
+      const cs = getComputedStyle(el);
+      let radius = parseFloat(cs.borderRadius) || 0;
+      radius = Math.min(radius, w / 2, h / 2);
+      const bezel = Math.min(w, h) / 2 * this.bezelFrac;
+      const { url, scale } = buildDisplacementMap(w, h, radius, bezel, this.strength, this.zoom * global.strength);
+      ['width', 'height'].forEach((k, i) => {
+        filter.setAttribute(k, [w, h][i]);
+        feImage.setAttribute(k, [w, h][i]);
+      });
+      filter.setAttribute('x', 0); filter.setAttribute('y', 0);
+      feImage.setAttribute('href', url);
+      feDisp.setAttribute('scale', scale.toFixed(2));
+      el.style.backdropFilter = el.style.webkitBackdropFilter =
+        `url(#${id}) blur(${global.blur}px) saturate(${global.sat}%)`;
+    }
+  };
+  new ResizeObserver(() => g.update()).observe(el);
+  glasses.push(g);
+  return g;
+}
+
+document.querySelectorAll('[data-glass]').forEach(makeGlass);
+const updateAll = () => glasses.forEach(g => g.update());
+
+/* ---- 鼠标镜面高光 ---- */
+document.querySelectorAll('.glass').forEach(el => {
+  el.addEventListener('pointermove', e => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
+});
+
+/* ---- 深浅色切换 ---- */
+const themeBtn = document.getElementById('theme-btn');
+themeBtn.addEventListener('click', () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme === 'dark';
+  root.dataset.theme = dark ? 'light' : 'dark';
+  themeBtn.innerHTML = dark ? '<span>🌙</span>' : '<span>☀️</span>';
+});
+
+/* ---- Dock 放大 ---- */
+const dock = document.getElementById('dock');
+const apps = [...dock.querySelectorAll('.app')];
+dock.addEventListener('pointermove', e => {
+  apps.forEach(a => {
+    const r = a.getBoundingClientRect();
+    const d = Math.abs(e.clientX - (r.left + r.width / 2));
+    const s = 1 + 0.55 * Math.exp(-(d * d) / (2 * 70 * 70));
+    a.style.transform = `scale(${s}) translateY(${-(s - 1) * 14}px)`;
+  });
+});
+dock.addEventListener('pointerleave', () => apps.forEach(a => a.style.transform = ''));
+
+/* ================================================================
+   点击“获取程序”弹出图片（预加载优化）
+   ================================================================ */
+const imgSrc = 'PhiCraft.jpg'; // 图片路径
+
+// 1. 页面加载时预加载图片
+const preloadedImg = new Image();
+preloadedImg.src = imgSrc;
+
+// 2. 获取 DOM 元素
+const modalOverlay = document.getElementById('modal-overlay');
+const modalImg = document.getElementById('modal-img');
+const modalSpinner = document.getElementById('modal-spinner');
+const modalClose = document.getElementById('modal-close');
+
+// 3. 打开模态框的函数
+function openModal() {
+  modalOverlay.classList.add('active');
+  modalSpinner.style.display = 'flex';
+  modalImg.style.display = 'none';
+
+  // 如果图片已经预加载完成（缓存中），直接显示
+  if (preloadedImg.complete && preloadedImg.naturalWidth > 0) {
+    modalImg.src = imgSrc;
+    modalSpinner.style.display = 'none';
+    modalImg.style.display = 'block';
+  } else {
+    // 否则等待加载事件
+    modalImg.src = imgSrc;
+    modalImg.onload = function() {
+      modalSpinner.style.display = 'none';
+      modalImg.style.display = 'block';
+    };
+    modalImg.onerror = function() {
+      modalSpinner.innerHTML = '<span style="color:#ff5252;">图片加载失败，请检查路径</span>';
+    };
+  }
+}
+
+// 4. 关闭模态框
+function closeModal() {
+  modalOverlay.classList.remove('active');
+}
+
+// 5. 绑定点击事件
+document.getElementById('get-program-btn').addEventListener('click', openModal);
+document.getElementById('get-program-btn-2').addEventListener('click', openModal);
+modalClose.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+// 按 ESC 键关闭
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>
