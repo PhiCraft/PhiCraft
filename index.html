@@ -884,11 +884,11 @@ dock.addEventListener('pointermove', e => {
 dock.addEventListener('pointerleave', () => apps.forEach(a => a.style.transform = ''));
 
 /* ================================================================
-   点击“获取程序”弹出图片（预加载优化）
+   点击“获取程序”弹出图片（预加载优化 + 修复加载中问题）
    ================================================================ */
 const imgSrc = 'PhiCraft.jpg'; // 图片路径
 
-// 1. 页面加载时预加载图片
+// 1. 页面加载时预加载图片（使用同一个 Image 对象）
 const preloadedImg = new Image();
 preloadedImg.src = imgSrc;
 
@@ -904,27 +904,30 @@ function openModal() {
   modalSpinner.style.display = 'flex';
   modalImg.style.display = 'none';
 
-  // 如果图片已经预加载完成（缓存中），直接显示
-  if (preloadedImg.complete && preloadedImg.naturalWidth > 0) {
-    modalImg.src = imgSrc;
+  // 移除旧的事件监听（避免重复绑定）
+  modalImg.onload = null;
+  modalImg.onerror = null;
+
+  // 设置图片源
+  modalImg.src = imgSrc;
+
+  // 监听加载完成
+  modalImg.onload = function() {
     modalSpinner.style.display = 'none';
     modalImg.style.display = 'block';
-  } else {
-    // 否则等待加载事件
-    modalImg.src = imgSrc;
-    modalImg.onload = function() {
-      modalSpinner.style.display = 'none';
-      modalImg.style.display = 'block';
-    };
-    modalImg.onerror = function() {
-      modalSpinner.innerHTML = '<span style="color:#ff5252;">图片加载失败，请检查路径</span>';
-    };
-  }
+  };
+
+  // 监听加载失败
+  modalImg.onerror = function() {
+    modalSpinner.innerHTML = '<span style="color:#ff5252;">图片加载失败，请检查路径</span>';
+    // 也可以选择隐藏 spinner 并显示错误信息，或保留加载状态但提示错误
+  };
 }
 
 // 4. 关闭模态框
 function closeModal() {
   modalOverlay.classList.remove('active');
+  // 可选：重置图片源，释放内存，但不需要
 }
 
 // 5. 绑定点击事件
