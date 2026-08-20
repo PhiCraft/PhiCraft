@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PhiCraft — 谱面编辑与重制工具</title>
+<title>PhiCraft — 谱面批量编辑与重制工具</title>
 <style>
   /* ========== Defs.txt 按钮样式（完全复刻） ========== */
   @property --angle-1 {
@@ -669,14 +669,14 @@
   <!-- 主题切换按钮 -->
   <div class="button-wrap">
     <div class="button-shadow"></div>
-    <button id="theme-btn"><span>🌙</span></button>
+    <button id="theme-btn"><span>深色</span></button>
   </div>
 </nav>
 
 <main>
   <div class="hero">
-    <h1><small>Phira 谱面编辑 · 重制 · 融合</small>PhiCraft</h1>
-    <p>轻量、高效的谱面工具，支持音符批量转换、流速调节、长条切割、铺面融合、镜像偏移，内置 C++ 加速引擎。</p>
+    <h1><small>Phigros / Phira 谱面批量编辑器</small>PhiCraft</h1>
+    <p>原生 C++ 编写，零依赖运行。支持 PEZ / ZIP / JSON 格式批量导入，内置队列式多线程处理引擎，提供音符转换、流速调节、铺面融合、偏移复制等全套修改能力。</p>
     <div class="glass hero-card" data-glass data-bezel="0.5" data-strength="0.5">
       <!-- 获取程序按钮 -->
       <div class="button-wrap" id="get-program-wrap">
@@ -698,68 +698,68 @@
 
   <section id="features">
     <h2>核心功能</h2>
-    <p class="sub">六大模块，覆盖谱面制作全流程</p>
+    <p class="sub">六大模块，覆盖谱面创作与批量处理全流程</p>
     <div class="grid">
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
-        <div class="icon" style="background:linear-gradient(135deg,#4facfe,#1e6cff)">I</div>
-        <h3>谱面信息</h3>
-        <p>修改曲名、艺术家、谱师、BPM 及封面曲绘，一键保存生效。</p>
+        <div class="icon" style="background:linear-gradient(135deg,#4facfe,#1e6cff)">F</div>
+        <h3>文件管理</h3>
+        <p>支持拖拽导入 PEZ / ZIP / JSON，自动解压至临时目录；实时搜索、右键菜单删除及颜色标签分类，跨会话持久保存。</p>
       </div>
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
-        <div class="icon" style="background:linear-gradient(135deg,#ff5e8a,#ff2d55)">N</div>
-        <h3>音符转换</h3>
-        <p>Tap、Drag、Flick 与长条之间的批量转换，支持多选文件同时处理。</p>
+        <div class="icon" style="background:linear-gradient(135deg,#ff5e8a,#ff2d55)">I</div>
+        <h3>信息编辑</h3>
+        <p>兼容 Info.txt（RPE）、info.json、info.yml 三种格式。编辑曲名、艺术家、谱师、BPM、偏移，支持一键更换曲绘。</p>
       </div>
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
-        <div class="icon" style="background:linear-gradient(135deg,#38d9c0,#2bb673)">S</div>
-        <h3>流速与切割</h3>
-        <p>整体倍率缩放或固定流速，并将长条拆分为密集短音符。</p>
+        <div class="icon" style="background:linear-gradient(135deg,#38d9c0,#2bb673)">N</div>
+        <h3>音符修改</h3>
+        <p>Tap / Drag / Flick / 长条任意互转。按拍数切割长条为密集短音符，支持音符随机化、左右镜像翻转及 EZ / HD 难度转换。</p>
       </div>
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
-        <div class="icon" style="background:linear-gradient(135deg,#a17bff,#6a5bff)">F</div>
-        <h3>铺面融合</h3>
-        <p>合并多个 .json 谱面，自动处理不同 BPM 并统一输出。</p>
+        <div class="icon" style="background:linear-gradient(135deg,#a17bff,#6a5bff)">S</div>
+        <h3>流速与融合</h3>
+        <p>整体流速倍率缩放或固定为指定值。合并多个谱面判定线，自动 BPM 重采样与格式一致性校验，版本号取高。</p>
       </div>
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
-        <div class="icon" style="background:linear-gradient(135deg,#ffd35e,#ff9500)">M</div>
-        <h3>偏移与镜像</h3>
-        <p>按拍数偏移复制所有判定线，或一键左右镜像翻转。</p>
+        <div class="icon" style="background:linear-gradient(135deg,#ffd35e,#ff9500)">O</div>
+        <h3>偏移与复制</h3>
+        <p>按 0.00001 拍精度整线偏移复制，复制次数可调。支持覆盖音符类型（保持原样 / 全部 Tap / Drag / 长条 / Flick）。</p>
       </div>
       <div class="glass app-card" data-glass data-bezel="0.45" data-strength="0.5">
         <div class="icon" style="background:linear-gradient(135deg,#9aa0ae,#5b616e)">C</div>
         <h3>C++ 加速引擎</h3>
-        <p>内置 phi_plugin.dll，音符处理与偏移复制性能提升数倍。</p>
+        <p>原生 C++ + Qt 编写，单可执行文件。内置 ZIP 压缩引擎，全局异常捕获生成日志，不闪退。</p>
       </div>
     </div>
   </section>
 
   <section id="demo">
     <h2>能力演示</h2>
-    <p class="sub">直观感受谱面编辑的流畅与精准</p>
+    <p class="sub">直观感受批量处理的流畅与精准</p>
     <div class="feature-demo">
       <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
-        <h3>批量音符转换</h3>
-        <p>选中多个谱面文件，一键将 Tap 转为 Drag，或将长条切割为 Tap。</p>
-        <div class="mock">→ 选中 3 个文件 · 转换类型：Tap → Drag<br>→ 共处理 1,247 个音符</div>
+        <h3>批量转换与切割</h3>
+        <p>队列式批量处理，支持单谱面内多文件并行。一键将长条拆分为每拍 4 份的密集短音符，或批量转换音符类型。</p>
+        <div class="mock">→ 选中 5 个谱面 · 并发线程数 8<br>→ 共切割 2,300 个长条，耗时 1.2 秒</div>
       </div>
       <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
-        <h3>铺面融合</h3>
-        <p>将多个不同 BPM 的谱面合并为一个，自动重采样，输出统一节奏。</p>
-        <div class="mock">→ 源文件：A.json (140BPM) + B.json (160BPM)<br>→ 合并后：190 条判定线，BPM 统一为 140</div>
+        <h3>铺面融合与稳定</h3>
+        <p>自动读取 BPM 并重采样，将多个不同节奏的谱面合并为统一时间轴。ZIP 路径穿越防护，崩溃时生成 phicraft.log 日志。</p>
+        <div class="mock">→ 源文件：A.json (160BPM) + B.json (120BPM)<br>→ 合并后：156 条判定线，BPM 统一为 140</div>
       </div>
     </div>
     <div style="margin-top:30px;">
       <div class="glass demo-panel" data-glass data-bezel="0.5" data-strength="0.5">
-        <h3>流速与切割</h3>
-        <p>整体流速倍率缩放，或固定为指定值。长条可自动切割为密集短音符。</p>
-        <div class="mock">→ 流速倍率 1.25× · 切割每拍 4 份 → 长条数减少 80%</div>
+        <h3>JSON 直编与导出</h3>
+        <p>内置 JSON 文本编辑器，支持查找替换与全部替换（确认提示），直接修改原始文件。支持单文件与批量导出 PEZ。</p>
+        <div class="mock">→ 等宽字体显示 · 大文件流畅编辑<br>→ 导出配置：默认后缀 .pez，自动重名</div>
       </div>
     </div>
   </section>
 
   <section id="download">
     <h2>获取 PhiCraft</h2>
-    <p class="sub">兼容 Windows，绿色免安装</p>
+    <p class="sub">Windows 10 / 11 64 位 · 无依赖运行</p>
     <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
       <!-- 获取程序按钮 -->
       <div class="button-wrap" id="get-program-wrap-2">
@@ -774,14 +774,14 @@
       </a>
     </div>
     <div style="margin-top:30px; font-size:14px; color:var(--text-dim);">
-      版本 2.1.0 · 支持 Windows 10/11 · 无依赖运行
+      版本 1.2.0 · 原生 C++ · 单可执行文件 · 无需安装
     </div>
   </section>
 
   <section id="how" class="marquee-zone">
     <div class="marquee">
-      <span>谱面编辑 · 音符转换 · 流速调节 · 铺面融合 · 镜像偏移 · 加速引擎 · </span>
-      <span>谱面编辑 · 音符转换 · 流速调节 · 铺面融合 · 镜像偏移 · 加速引擎 · </span>
+      <span>纯C++ · 零依赖 · 批量导入 · 音符转换 · 流速调节 · 铺面融合 · 偏移复制 · 毛玻璃 · 双主题 · </span>
+      <span>纯C++ · 零依赖 · 批量导入 · 音符转换 · 流速调节 · 铺面融合 · 偏移复制 · 毛玻璃 · 双主题 · </span>
     </div>
   </section>
 </main>
@@ -793,7 +793,7 @@
 </div>
 
 <!-- 页脚 -->
-<footer>PhiCraft © 2026 · 专为 Phira 社区打造 · 使用过程中遇到任何问题，欢迎反馈</footer>
+<footer>PhiCraft © 2026 · 专为 Phira 谱师社区打造 · 反馈请进群</footer>
 
 <!-- 图片弹出模态框 -->
 <div id="modal-overlay">
@@ -923,7 +923,7 @@ themeBtn.addEventListener('click', () => {
   const root = document.documentElement;
   const dark = root.dataset.theme === 'dark';
   root.dataset.theme = dark ? 'light' : 'dark';
-  themeBtn.innerHTML = dark ? '<span>🌙</span>' : '<span>☀️</span>';
+  themeBtn.innerHTML = dark ? '<span>深色</span>' : '<span>浅色</span>';
 });
 
 /* ---- Dock 放大 ---- */
@@ -940,7 +940,7 @@ dock.addEventListener('pointermove', e => {
 dock.addEventListener('pointerleave', () => apps.forEach(a => a.style.transform = ''));
 
 /* ================================================================
-   点击“获取程序”弹出 QQ 群号并跳转到底部
+   点击"获取程序"弹出 QQ 群号并跳转到底部
    ================================================================ */
 const qqNum = '1102327584';
 
